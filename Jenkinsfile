@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "aditya1664/mynodeapp"
+        IMAGE_TAG = "1.0"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Aditya1664/assignment.git'
+
+            }
+        }
+
+        stage('Build App') {
+            steps {
+                sh 'npm install'
+                sh 'npm run build || echo "No build step"'  // If Node.js has a build step
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh "docker stop nodeapp || true"
+                sh "docker rm nodeapp || true"
+                sh "docker run -d -p 9090:8080 --name nodeapp $IMAGE_NAME:$IMAGE_TAG"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline finished successfully. App running on port 9090."
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
